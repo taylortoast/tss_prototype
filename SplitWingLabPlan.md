@@ -23,6 +23,7 @@ Each prefab is an export-ready architectural model with its own room layout, str
 - **Option 2 — Loop Hallway:** Model the enclosed central server/core, continuous main hallway loop, stair core, Workstation Rooms A/B/C, Server Room, Network Closet, Server Room Annex, and Breakout Area on both floors. Preserve the loop as a continuous player route around the core.
 - **Option 3 — Split Wing:** Model the long hall between the workstation and infrastructure wings. Floor 1 contains Workstation Labs A/B, Practice Room, Server Room, Network Closet, and Utility Room; Floor 2 contains Observation Area, Practice Room, Core Server Room, Network Closet, plus standard-height enclosed upper rooms over the two bays marked open in the reference. Preserve the diagram’s stair/hall alignment and wing separation.
 - Assemble each option under a single named root with `Floor1`, `Floor2`, `Structure`, `Roof`, `Lighting`, and `Spawn` children. Save it as its own prefab in `Assets/Prefabs/Buildings/` for later Unity-package or model export. The shared modules live separately under `Assets/Prefabs/Architecture/`.
+- Option 3's stair assembly is split into reusable `StaircaseLower.prefab` and `StaircaseUpper.prefab` flight prefabs, each with nine 2.05 m-wide steps. Preserve the edited `FloorSlab_South` and `StairLanding` dimensions, add a level upper landing, and enclose the second-floor stair opening with a controlled access wall so the stair shaft and surrounding building remain sealed.
 
 ## Player and baked lighting
 

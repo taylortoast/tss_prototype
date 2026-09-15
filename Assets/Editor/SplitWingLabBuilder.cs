@@ -15,7 +15,7 @@ internal static class SplitWingLabBuilder
     private const float FloorHeight = 3f;
     private const float DoorWidth = 1.2f;
     private const float DoorHeight = 2.1f;
-    private const float StairWidth = 1.5f;
+    private const float StairWidth = 2.05f;
 
     private enum DoorSide { None, North, South, East, West }
 
@@ -42,11 +42,25 @@ internal static class SplitWingLabBuilder
     {
         EnsureFolders();
         CreateModules();
+        CreateStaircasePrefabs();
         for (int i = 0; i < OptionNames.Length; i++) BuildOption(i);
         BuildGallery();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log("Built all three floor-plan building prefabs and preview scenes.");
+    }
+
+    [MenuItem("TSS/Build Option 3 Split Wing")]
+    public static void BuildOption3Only()
+    {
+        EnsureFolders();
+        CreateModules();
+        CreateStaircasePrefabs();
+        BuildOption(2);
+        BuildGallery();
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("Built the Option 3 Split Wing prefab, preview scene, and gallery.");
     }
 
     private static void EnsureFolders()
@@ -91,6 +105,33 @@ internal static class SplitWingLabBuilder
         Modules[name] = AssetDatabase.LoadAssetAtPath<GameObject>(path);
     }
 
+    private static void CreateStaircasePrefabs()
+    {
+        CreateStaircasePrefab("StaircaseLower", false);
+        CreateStaircasePrefab("StaircaseUpper", true);
+    }
+
+    private static void CreateStaircasePrefab(string name, bool upper)
+    {
+        string path = "Assets/Prefabs/Architecture/" + name + ".prefab";
+        bool existing = AssetDatabase.LoadAssetAtPath<GameObject>(path) != null;
+        GameObject root = existing ? PrefabUtility.LoadPrefabContents(path) : new GameObject(name);
+        while (root.transform.childCount > 0) UnityEngine.Object.DestroyImmediate(root.transform.GetChild(0).gameObject);
+        for (int i = 0; i < 9; i++)
+        {
+            float height = (i + 1) * (FloorHeight / 18f);
+            float z = upper ? -0.35f + i * 0.3f : -2.75f + i * 0.3f;
+            float y = upper ? 1.5f + height * 0.5f : height * 0.5f;
+            float x = upper ? StairWidth * 0.5f : -StairWidth * 0.5f;
+            AddModule("StairStepModule", root.transform, new Vector3(x, y, z), new Vector3(StairWidth, height, 0.3f), (upper ? "UpperStep_" : "LowerStep_") + i);
+        }
+        MarkHierarchyStatic(root.transform);
+        PrefabUtility.SaveAsPrefabAsset(root, path);
+        if (existing) PrefabUtility.UnloadPrefabContents(root);
+        else UnityEngine.Object.DestroyImmediate(root);
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+    }
+
     private static void BuildOption(int option)
     {
         string key = OptionNames[option];
@@ -114,7 +155,7 @@ internal static class SplitWingLabBuilder
         AddSlab(floor1, 0f, false);
         AddSlab(floor2, FloorHeight, true);
         AddExterior(structure);
-        AddStairCore(structure);
+        AddStairCore(structure, option);
         AddRooms(option, floor1, 0f, GetRooms(option, 0));
         AddRooms(option, floor2, FloorHeight, GetRooms(option, 1));
         AddRoof(roof);
@@ -221,21 +262,47 @@ internal static class SplitWingLabBuilder
         AddWall(parent, new Vector3(18f, 6.3f, 0f), new Vector3(WallThickness, 0.6f, BuildingDepth), "Parapet_East");
     }
 
-    private static void AddStairCore(Transform parent)
+    private static void AddStairCore(Transform parent, int option)
     {
         AddWallWithDoor(parent, new Vector3(0f, 1.4f, -4f), 6f, false, DoorWidth, "StairCore_South");
         AddWall(parent, new Vector3(-3f, 1.4f, 0f), new Vector3(WallThickness, WallHeight, 8f), "StairCore_West");
         AddWall(parent, new Vector3(3f, 1.4f, 0f), new Vector3(WallThickness, WallHeight, 8f), "StairCore_East");
         AddWall(parent, new Vector3(0f, 1.4f, 4f), new Vector3(6f, WallHeight, WallThickness), "StairCore_North");
         Transform stairs = NewChild(parent.gameObject, "Staircase");
-        for (int i = 0; i < 9; i++)
+        GameObject lowerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Architecture/StaircaseLower.prefab");
+        GameObject upperPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Architecture/StaircaseUpper.prefab");
+        if (lowerPrefab != null) PrefabUtility.InstantiatePrefab(lowerPrefab, stairs);
+        if (upperPrefab != null) PrefabUtility.InstantiatePrefab(upperPrefab, stairs);
+        if (option == 2)
         {
-            float top = (i + 1) * (FloorHeight / 18f);
-            AddModule("StairStepModule", stairs, new Vector3(-0.9f, top * 0.5f, -2.75f + i * 0.3f), new Vector3(StairWidth, top, 0.3f), "LowerStep_" + i);
-            float upperHeight = (i + 1) * (FloorHeight / 18f);
-            AddModule("StairStepModule", stairs, new Vector3(0.9f, 1.5f + upperHeight * 0.5f, -0.35f - i * 0.3f), new Vector3(StairWidth, upperHeight, 0.3f), "UpperStep_" + i);
+            AddModule("FloorModule", stairs, new Vector3(0f, 1.5f, -0.35f), new Vector3(4.1f, 0.2f, 1.5f), "StairLandingMid");
+            AddModule("FloorModule", stairs, new Vector3(0f, 1.5f, 1.874f), new Vector3(5.8f, 0.2f, 4.1f), "StairLanding");
+            AddModule("FloorModule", stairs, new Vector3(0f, FloorHeight - 0.1f, 2.05f), new Vector3(5.8f, 0.2f, 3.9f), "StairLandingTop");
+            AddUpperStairEnclosure(parent);
         }
-        AddModule("FloorModule", stairs, new Vector3(0f, 1.5f, -0.05f), new Vector3(3f, 0.2f, 1.5f), "StairLanding");
+        else
+        {
+            AddModule("FloorModule", stairs, new Vector3(0f, 1.5f, -0.05f), new Vector3(3f, 0.2f, 1.5f), "StairLanding");
+        }
+    }
+
+    private static void AddUpperStairEnclosure(Transform parent)
+    {
+        float y = FloorHeight + WallHeight * 0.5f;
+        AddWall(parent, new Vector3(-3f, y, 0f), new Vector3(WallThickness, WallHeight, 8f), "StairCore_Upper_West");
+        AddVerticalWallWithDoor(parent, 3f, y, -4f, 4f, 2.05f, DoorWidth, "StairCore_Upper_East");
+        AddWall(parent, new Vector3(0f, y, 4f), new Vector3(6f, WallHeight, WallThickness), "StairCore_Upper_North");
+        AddWall(parent, new Vector3(0f, y, -4f), new Vector3(6f, WallHeight, WallThickness), "StairCore_Upper_South");
+    }
+
+    private static void AddVerticalWallWithDoor(Transform parent, float x, float y, float zMin, float zMax, float doorCenter, float gap, string name)
+    {
+        float southLength = Mathf.Max(0.5f, doorCenter - gap * 0.5f - zMin);
+        float northLength = Mathf.Max(0.5f, zMax - (doorCenter + gap * 0.5f));
+        AddWall(parent, new Vector3(x, y, zMin + southLength * 0.5f), new Vector3(WallThickness, WallHeight, southLength), name + "_South");
+        AddWall(parent, new Vector3(x, y, zMax - northLength * 0.5f), new Vector3(WallThickness, WallHeight, northLength), name + "_North");
+        float headerHeight = WallHeight - DoorHeight;
+        AddWall(parent, new Vector3(x, y + DoorHeight + headerHeight * 0.5f - WallHeight * 0.5f, doorCenter), new Vector3(WallThickness, headerHeight, gap), name + "_Header");
     }
 
     private static void AddRooms(int option, Transform parent, float baseY, List<Room> rooms)
