@@ -6,8 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/Scenes/BuildingGallery.unity
+    guid: 0a5810e01a6a3e6418a3985d7fc49893
+  - enabled: 1
+    path: Assets/Scenes/Option1_CentralSpine.unity
+    guid: b8306b4231933d746a9fb988e18ae4ce
+  - enabled: 1
+    path: Assets/Scenes/Option2_LoopHallway.unity
+    guid: 6a3cf1b5af92a3d4e8038abfdbe6d283
+  - enabled: 1
+    path: Assets/Scenes/Option3_SplitWing.unity
+    guid: b4cc079dd561e714285967975badf883
   m_configObjects:
+    com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
